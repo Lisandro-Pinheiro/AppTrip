@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableHighlight, Text } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { View, StyleSheet, TouchableHighlight } from 'react-native';
+import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
-import { Image } from 'expo-image';
+import { MaterialIcons } from '@expo/vector-icons';
 
-export default function CameraScreen() {
+export default function CameraScreen({ navigation, route}) {
   const [image, setImage] = useState(null);
   const [camera, setCamera] = useState(null);
   const [permission, setPermission] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [markers, setMarkers] = useState([]);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [isCameraVisible, setCameraVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -17,13 +21,28 @@ export default function CameraScreen() {
     })();
   }, []);
 
+  const handleAddMarker = () => {
+    if (currentLocation && capturedImage) {
+      const newMarker = {
+        id: markers.length.toString(),
+        coordinate: currentLocation,
+        imageUri: capturedImage,
+      };
+      setMarkers([...markers, newMarker]);
+    }
+    setCameraVisible(false)
+
+  };
+
   async function takePicture() {
     if (camera) {
       const photo = await camera.takePictureAsync();
-      console.log(photo.uri);
-      setImage(photo.uri);
       await MediaLibrary.saveToLibraryAsync(photo.uri);
+      navigation.navigate('Map', photo.uri);
     }
+
+    handleAddMarker()
+
   }
 
   return (
@@ -31,24 +50,15 @@ export default function CameraScreen() {
       <Camera
         ref={(ref) => setCamera(ref)}
         style={styles.camera}
-        type={CameraType.back}
         ratio={'1:1'}
       />
-      {image && (
-        <Image
-          style={styles.image}
-          source={{ uri: image }}
-          resizeMode="cover"
-          transition={1000}
-        />
-      )}
       <TouchableHighlight
         style={styles.button}
         onPress={() => {
           takePicture();
         }}
       >
-        <Text style={{ color: '#fff', fontSize: 18 }}>Capture</Text>
+        <MaterialIcons name="camera-alt" size={24} color="white" />
       </TouchableHighlight>
     </View>
   );
@@ -64,18 +74,14 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     flex: 1,
   },
-  image: {
-    flex: 1,
-    width: '100%',
-  },
   button: {
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 3,
     backgroundColor: '#9E9E36',
-    width: 80,
+    width: 40,
     height: 40,
-    borderRadius: 30,
+    borderRadius: 50,
     position: 'absolute',
     bottom: 50,
   },
