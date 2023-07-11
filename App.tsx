@@ -132,13 +132,17 @@ const App = () => {
     });
 
     setMarkers(updatedMarkers);
-    setModalVisible(false);
-    dismissKeyboard();
+   
 
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
   };
 
   return (
     <View style={styles.container}>
+
       {currentLocation ? (
         <MapView
           style={styles.map}
@@ -169,52 +173,58 @@ const App = () => {
             <MaterialIcons name="camera-alt" size={24} color="white" />
           </View>
         </TouchableOpacity>
-      )}
+      )
+      }
 
-      {isCameraVisible && (
-        <Camera
-          ref={cameraRef}
-          style={StyleSheet.absoluteFillObject}
-          type={Camera.Constants.Type['back']}
-          onCameraReady={() => console.log('Câmera pronta')}
-          onMountError={(error) => console.log('Erro ao montar a câmera:', error)}
-        >
-          <TouchableOpacity style={styles.captureButton} onPress={handleCaptureImage}>
-            <Text style={styles.captureButtonText}><MaterialIcons name="camera-alt" size={24} color="white" /></Text>
-          </TouchableOpacity>
-        </Camera>
-      )}
+      {
+        isCameraVisible && (
+          <Camera
+            ref={cameraRef}
+            style={StyleSheet.absoluteFillObject}
+            type={Camera.Constants.Type['front']['back']}
+            onCameraReady={() => console.log('Câmera pronta')}
+            onMountError={(error) => console.log('Erro ao montar a câmera:', error)}
+          >
+            <TouchableOpacity style={styles.captureButton} onPress={handleCaptureImage}>
+              <Text style={styles.captureButtonText}><MaterialIcons name="camera-alt" size={24} color="white" /></Text>
+            </TouchableOpacity>
+          </Camera>
+        )
+      }
 
-        <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-          <TouchableOpacity activeOpacity={1} style={styles.modalContainer} onPress={dismissKeyboard}>
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                {markerImageUri && (
-                  <Image
-                    source={{ uri: markerImageUri }}
-                    style={styles.modalImage}
-                  />
-                )}
-                <TextInput
-                  style={styles.input}
-                  placeholder="Título"
-                  value={markerTitle}
-                  onChangeText={setMarkerTitle}
+      <Modal visible={isModalVisible} animationType="slide" transparent={true}>
+        <TouchableOpacity activeOpacity={1} style={styles.modalContainer} onPress={dismissKeyboard}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {markerImageUri && (
+                <Image
+                  source={{ uri: markerImageUri }}
+                  style={styles.modalImage}
                 />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Descrição"
-                  value={markerDescription}
-                  onChangeText={setMarkerDescription}
-                  multiline={true}
-                />
-                <Button title="Salvar" onPress={handleSaveMarker} />
-              </View>
+              )}
+              <TextInput
+                style={styles.input}
+                placeholder="Título"
+                value={markerTitle}
+                onChangeText={setMarkerTitle}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Descrição"
+                value={markerDescription}
+                onChangeText={setMarkerDescription}
+                multiline={true}
+              />
+            <View style={{flexDirection:'row', justifyContent:'center', alignItems: 'center'}}>
+              <Button title= "Salvar" onPress={handleSaveMarker} />
+              <View > </View>
+              <Button title="Fechar" onPress={handleCloseModal} />
             </View>
-          </TouchableOpacity>
-
-        </Modal>
-    </View>
+            </View>
+          </View>
+        </TouchableOpacity >
+      </Modal>
+    </View >
   );
 };
 
@@ -271,6 +281,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
 
   },
   modalContent: {
