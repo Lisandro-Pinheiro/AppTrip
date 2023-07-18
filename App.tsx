@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
@@ -80,9 +80,11 @@ const App = () => {
     if (status !== 'granted') {
       console.log('Permissão da câmera não concedida');
     } else {
+      const type = Camera.Constants.Type['front'] || Camera.Constants.Type['back'];
       setCameraVisible(true);
+      cameraRef.current.setCameraType(type);
     }
-  };
+  }; 
 
   const handleCaptureImage = async () => {
     if (cameraRef.current) {
@@ -132,7 +134,7 @@ const App = () => {
     });
 
     setMarkers(updatedMarkers);
-   
+
 
   };
 
@@ -170,7 +172,7 @@ const App = () => {
       {!isCameraVisible && (
         <TouchableOpacity style={styles.buttonContainer} onPress={handleOpenCamera}>
           <View style={styles.iconContainer}>
-            <MaterialIcons name="camera-alt" size={24} color="white" />
+            <MaterialCommunityIcons name="camera-marker-outline" size={30} color="white" />
           </View>
         </TouchableOpacity>
       )
@@ -186,7 +188,7 @@ const App = () => {
             onMountError={(error) => console.log('Erro ao montar a câmera:', error)}
           >
             <TouchableOpacity style={styles.captureButton} onPress={handleCaptureImage}>
-              <Text style={styles.captureButtonText}><MaterialIcons name="camera-alt" size={24} color="white" /></Text>
+              <Text style={styles.captureButtonText}><MaterialCommunityIcons name="circle-slice-8" size={40} color="white" /></Text>
             </TouchableOpacity>
           </Camera>
         )
@@ -215,11 +217,10 @@ const App = () => {
                 onChangeText={setMarkerDescription}
                 multiline={true}
               />
-            <View style={{flexDirection:'row', justifyContent:'center', alignItems: 'center'}}>
-              <Button title= "Salvar" onPress={handleSaveMarker} />
-              <View > </View>
-              <Button title="Fechar" onPress={handleCloseModal} />
-            </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 60 }}>
+                <Button title="Salvar" onPress={handleSaveMarker} color='#000' />
+                <Button title="Fechar" onPress={handleCloseModal} color='#000' />
+              </View>
             </View>
           </View>
         </TouchableOpacity >
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
     right: 30,
-    backgroundColor: '#9E9E36',
+    backgroundColor: '#000',
     borderRadius: 40,
     padding: 15,
     elevation: 5,
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#9E9E36',
+    backgroundColor: '#transparent',
   },
   camera: {
     flex: 1,
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     alignSelf: 'center',
-    backgroundColor: '#9E9E36',
+    backgroundColor: '#transparent',
     borderRadius: 40,
     padding: 15,
     elevation: 5,
