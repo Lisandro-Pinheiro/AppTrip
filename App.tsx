@@ -12,10 +12,9 @@ import {
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialIcons, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { Camera } from 'expo-camera';
+import { Camera, CameraType } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Keyboard } from 'react-native';
-
 
 const App = () => {
   const [markers, setMarkers] = useState([]);
@@ -26,12 +25,13 @@ const App = () => {
   const [markerImageUri, setMarkerImageUri] = useState(null);
   const [markerTitle, setMarkerTitle] = useState('');
   const [markerDescription, setMarkerDescription] = useState('');
+
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
-
   const cameraRef = useRef(null);
+  const [cameraType, setCameraType] = useState(CameraType.back);
 
   useEffect(() => {
     getLocationPermission();
@@ -80,11 +80,17 @@ const App = () => {
     if (status !== 'granted') {
       console.log('Permissão da câmera não concedida');
     } else {
-      const type = Camera.Constants.Type['front'] || Camera.Constants.Type['back'];
       setCameraVisible(true);
-      cameraRef.current.setCameraType(type);
     }
-  }; 
+  };
+
+  const handleSwitchCamera = () => {
+    setCameraType(
+      cameraType === CameraType.back
+        ? CameraType.front
+        : CameraType.back
+    );
+  };
 
   const handleCaptureImage = async () => {
     if (cameraRef.current) {
@@ -113,7 +119,6 @@ const App = () => {
     </TouchableOpacity>
   );
 
-
   const handleMarkerPress = (marker) => {
     setMarkerImageUri(marker.imageUri);
     setMarkerTitle(marker.title);
@@ -134,75 +139,84 @@ const App = () => {
     });
 
     setMarkers(updatedMarkers);
-
-
   };
 
   const handleCloseModal = () => {
     setModalVisible(false);
   };
 
+  const handleGoBackToMap = () => {
+    setCameraVisible(false);
+  };
+
   return (
     <View style={styles.container}>
-
-      {currentLocation ? (
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: currentLocation.latitude,
-            longitude: currentLocation.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-        >
-          {markers.map((marker) => (
-            <Marker
-              key={marker.id}
-              coordinate={marker.coordinate}
-              onPress={() => handleMarkerPress(marker)}
-            >
-              {renderMarkerCallout(marker)}
-            </Marker>
-          ))}
-        </MapView>
-      ) : (
-        <Text style={styles.loadingText}>Carregando mapa...</Text>
-      )}
-
-      {!isCameraVisible && (
-        <TouchableOpacity style={styles.buttonContainer} onPress={handleOpenCamera}>
-          <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name="camera-marker-outline" size={30} color="white" />
-          </View>
-        </TouchableOpacity>
-      )
-      }
-
-      {
-        isCameraVisible && (
+      {isCameraVisible ? (
+        <View style={styles.cameraContainer}>
           <Camera
             ref={cameraRef}
             style={StyleSheet.absoluteFillObject}
-            type={Camera.Constants.Type['front']['back']}
+            type={cameraType}
             onCameraReady={() => console.log('Câmera pronta')}
             onMountError={(error) => console.log('Erro ao montar a câmera:', error)}
           >
             <TouchableOpacity style={styles.captureButton} onPress={handleCaptureImage}>
-              <Text style={styles.captureButtonText}><MaterialCommunityIcons name="circle-slice-8" size={40} color="white" /></Text>
+              <Text style={styles.captureButtonText}>
+                <MaterialCommunityIcons name="circle-slice-8" size={60} color="white" />
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.switchCameraButton} onPress={handleSwitchCamera}>
+              <Text style={styles.switchCameraButtonText}>
+              <MaterialIcons name="flip-camera-android" size={60} color="white" />
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.goBackButton} onPress={handleGoBackToMap}>
+              <Text style={styles.goBackButtonText}>
+                <MaterialIcons name="arrow-back" size={60} color="white" />
+              </Text>
             </TouchableOpacity>
           </Camera>
-        )
-      }
+        </View>
+      ) : (
+        <View style={styles.mapContainer}>
+          {currentLocation ? (
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: currentLocation.latitude,
+                longitude: currentLocation.longitude,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+              }}
+            >
+              {markers.map((marker) => (
+                <Marker
+                  key={marker.id}
+                  coordinate={marker.coordinate}
+                  onPress={() => handleMarkerPress(marker)}
+                >
+                  {renderMarkerCallout(marker)}
+                </Marker>
+              ))}
+            </MapView>
+          ) : (
+            <Text style={styles.loadingText}>Carregando mapa...</Text>
+          )}
+
+          <TouchableOpacity style={styles.buttonContainer} onPress={handleOpenCamera}>
+            <View style={styles.iconContainer}>
+              <MaterialCommunityIcons name="camera-marker-outline" size={30} color="white" />
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal visible={isModalVisible} animationType="slide" transparent={true}>
         <TouchableOpacity activeOpacity={1} style={styles.modalContainer} onPress={dismissKeyboard}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               {markerImageUri && (
-                <Image
-                  source={{ uri: markerImageUri }}
-                  style={styles.modalImage}
-                />
+                <Image source={{ uri: markerImageUri }} style={styles.modalImage} />
               )}
               <TextInput
                 style={styles.input}
@@ -223,15 +237,23 @@ const App = () => {
               </View>
             </View>
           </View>
-        </TouchableOpacity >
+        </TouchableOpacity>
       </Modal>
-    </View >
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  cameraContainer: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  mapContainer: {
+    flex: 1,
+    position: 'relative',
   },
   map: {
     flex: 1,
@@ -257,9 +279,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#transparent',
   },
-  camera: {
-    flex: 1,
-  },
   captureButton: {
     position: 'absolute',
     bottom: 30,
@@ -268,8 +287,34 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     padding: 15,
     elevation: 5,
+    marginLeft: 10,
   },
   captureButtonText: {
+    color: '#FFFFFF',
+  },
+  switchCameraButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 16,
+    backgroundColor: '#transparent',
+    borderRadius: 40,
+    padding: 15,
+    elevation: 5,
+    marginStart: 10,
+  },
+  switchCameraButtonText: {
+    color: '#FFFFFF',
+  },
+  goBackButton: {
+    position: 'absolute',
+    bottom: 30,
+    backgroundColor: '#transparent',
+    borderRadius: 40,
+    padding: 15,
+    elevation: 5,
+    left: 16,
+  },
+  goBackButtonText: {
     color: '#FFFFFF',
   },
   markerImage: {
@@ -283,7 +328,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
