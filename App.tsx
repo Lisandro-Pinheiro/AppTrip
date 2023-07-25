@@ -15,9 +15,20 @@ import * as Location from 'expo-location';
 import { Camera, CameraType } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Keyboard } from 'react-native';
+import { db } from './firebase-config';
+import { onValue, ref } from 'firebase/database';
+
+export interface MarkerEntity {
+  id: string;
+  coords: { latitude: number; longitude: number };
+  imagePath: string;
+  title: string;
+  description: string;
+  photodate: string;
+}
 
 const App = () => {
-  const [markers, setMarkers] = useState([]);
+  const [markers, setMarkers] = useState<MarkerEntity[]>([]);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [isCameraVisible, setCameraVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -28,13 +39,20 @@ const App = () => {
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
-  };
+  }; 
+
+  async function getPlace(){
+    return onValue (ref(db,'/places'), (snapshot) =>{
+      console.log('dados do RealTime',snapshot);
+    });
+  }
 
   const cameraRef = useRef(null);
   const [cameraType, setCameraType] = useState(CameraType.back);
 
   useEffect(() => {
     getLocationPermission();
+    getPlace();
   }, []);
 
   const getLocationPermission = async () => {
@@ -54,12 +72,13 @@ const App = () => {
 
   const handleAddMarker = () => {
     if (currentLocation && capturedImage) {
-      const newMarker = {
+      const newMarker: MarkerEntity = {
         id: markers.length.toString(),
-        coordinate: currentLocation,
-        imageUri: capturedImage,
+        coords: { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+        imagePath: capturedImage,
         title: '',
         description: '',
+        photodate: new Date().toString(),
       };
       setMarkers([...markers, newMarker]);
     }
@@ -97,12 +116,13 @@ const App = () => {
       const photo = await cameraRef.current.takePictureAsync();
       await saveToGallery(photo.uri);
 
-      const newMarker = {
+      const newMarker: MarkerEntity = {
         id: markers.length.toString(),
-        coordinate: currentLocation,
-        imageUri: photo.uri,
+        coords: { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+        imagePath: photo.uri,
         title: '',
         description: '',
+        photodate: new Date().toString(),
       };
       setMarkers([...markers, newMarker]);
 
@@ -112,15 +132,15 @@ const App = () => {
     }
   };
 
-  const renderMarkerCallout = (marker) => (
+  const renderMarkerCallout = (marker: MarkerEntity) => (
     <TouchableOpacity onPress={dismissKeyboard}>
-      <Image source={{ uri: marker.imageUri }} style={styles.markerImage} />
+      <Image source={{ uri: marker.imagePath }} style={styles.markerImage} />
       <Text style={{ textAlign: 'center', fontWeight: 'bold', fontStyle: 'italic', color: '#303F9F' }}>{marker.title}</Text>
     </TouchableOpacity>
   );
 
-  const handleMarkerPress = (marker) => {
-    setMarkerImageUri(marker.imageUri);
+  const handleMarkerPress = (marker: MarkerEntity) => {
+    setMarkerImageUri(marker.imagePath);
     setMarkerTitle(marker.title);
     setMarkerDescription(marker.description);
     setModalVisible(true);
@@ -128,7 +148,7 @@ const App = () => {
 
   const handleSaveMarker = () => {
     const updatedMarkers = markers.map((marker) => {
-      if (marker.imageUri === markerImageUri) {
+      if (marker.imagePath === markerImageUri) {
         return {
           ...marker,
           title: markerTitle,
@@ -192,7 +212,7 @@ const App = () => {
               {markers.map((marker) => (
                 <Marker
                   key={marker.id}
-                  coordinate={marker.coordinate}
+                  coordinate={marker.coords}
                   onPress={() => handleMarkerPress(marker)}
                 >
                   {renderMarkerCallout(marker)}
