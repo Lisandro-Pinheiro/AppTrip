@@ -15,8 +15,9 @@ import * as Location from 'expo-location';
 import { Camera, CameraType } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Keyboard } from 'react-native';
-import { db } from './firebase-config';
+import { app, db } from './firebase-config';
 import { onValue, ref } from 'firebase/database';
+import * as  firebaseStorage from '@firebase/storage';
 
 export interface MarkerEntity {
   id: string;
@@ -36,6 +37,7 @@ const App = () => {
   const [markerImageUri, setMarkerImageUri] = useState(null);
   const [markerTitle, setMarkerTitle] = useState('');
   const [markerDescription, setMarkerDescription] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -125,6 +127,24 @@ const App = () => {
     );
   };
 
+  async function uploadImage(imageUrl): Promise<string>{
+    setIsUploading(true);
+    const response = await fetch (imageUrl)
+    const blob = await response.blob();
+
+    const storage = firebaseStorage.getStorage(app);
+    const storageRef = firebaseStorage.ref(
+      storage,
+      'images/' + imageUrl.replace(/^.*[\\\/]/, '')
+    ); 
+
+    const upload = await firebaseStorage.uploadBytes(storageRef, blob);
+    const uploadedImageUrl = await firebaseStorage.getDownloadURL (storageRef);
+    console.log(uploadedImageUrl);
+    setIsUploading(false);
+    return uploadedImageUrl;
+    }
+
   const handleCaptureImage = async () => {
     if (cameraRef.current) {
       const photo = await cameraRef.current.takePictureAsync();
@@ -133,7 +153,7 @@ const App = () => {
       const newMarker: MarkerEntity = {
         id: markers.length.toString(),
         coords: { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
-        imagePath: photo.uri,
+        imagePath: await uploadImage(photo.uri),
         title: '',
         description: '',
         photodate: new Date().toString(),
@@ -194,6 +214,23 @@ const App = () => {
             onCameraReady={() => console.log('Câmera pronta')}
             onMountError={(error) => console.log('Erro ao montar a câmera:', error)}
           >
+
+            {
+              isUploading? 
+              <View style={{
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'black',
+                opacity: 0.8, 
+                justifyContent: "center",
+                alignItems: "center"
+              }}>
+                <Image style={{width: 100, height: 80}}
+                  source={{uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADKCAMAAADXTv+nAAAAJ1BMVEX///8oKChWVlaQkJAzMzOmpqbLy8tpaWm3t7dFRUV/f3/c3Nzq6urM8SFYAAAEwklEQVR4nO3a4XbaMAyG4dAA2Sj3f71baEOT2JY+yZLtpH5/tuCj56gsGTAMvV6v11v3+Kr2GLk93tWeJK/HutrDZPQ4J+S4ksdZIYeVdEhrdUjBxv+xD5JDpmmymA5uXKIfJoRMS3aDMo0jJpFBpqm0ZBxBiQgyTaUl44hKJJBpKi0ZzwohJALItM9+8H3nhaQlOCRwHBQSOqpAkpLDQVISFBJxnAbiNf06XAJC6ixkELxK9BC/4dfBK8Eg1RaCSyBIRYc7xHf6daAEgdRcyIC+3pUQ7+HXYSsBIJUXAq5EB/Effh20Eh5SfSGYhIU04DgPBJFwkCYcyOudgTTiAFZyEAgvoSHNOM4DYSUkpCEH+3qXQjxGvM2xj2JWQkE0C/l4JWYgFlMIxBBZbjdUQq+EgIgX8rFJ7uAopCQNyXRgkltQEYiEoYVQFEqShMgWEjIgSMxBUYwgIkYOJCkhVpKCCBYSZ0CSFCRJwVey/NjAkQVJUPCVpB1xSJqRC4Ely69QiIODkcQo6L/Ay88wCMWwgMQoBCT2NVPEQTPASzsnCSgUJPK9X97BMdCbrXwJeTwHYRn4DTAr2VMkDu5bDoYORLKl5EAcGQqKxLGVCB1CBkZJSICzEw7zdeRQwLMjDi+GnJKVJ2MoKHF2DIqLSpuMOX9JEcact6SUQ3FHLKoYY85TUpAxKP7niFeSMVcBYjJ3pMIQk5kTFYSYzEtUCGIyK525Q/vebn7uEIMZwWwdO4nBeYJMHWuJyXGiDBlz1Ry9Xq9XvT+SnGb4Kylf4WQRKRIUhcNcIneEFJXDGKJy7CU6iK3EAqJ0mEKUjq1EC7GUdEiHdEiH4JDTXEeauLIrJbtDWoCoJMEh9RkqSeyU6gw5xWmIXq/Xa7n7K7Pjrq/MjoO7vzM57vrO5Di4+zqD867rDM4Du+/KPvC6y2BGpL3DHlJEEjDyJYGjACXGcIH4UuIMJ4gjJeXwgjhJkgw/iAeFYHhCzCmeDhpiKiEZHtcRHwrDMLhFYSA2FI5hctPISrIpLMPqPt5Z4uq4yCQZFCHj8xWq+KoEhWdsHJ9LAoZYoqAIGT8OhHJZ50sRMjYOFnJJQqz/vqSMrYOVXPIkOEXK2DsYyGXf7vdmErEjgGwkzzkJxOqiImaEjhXkuURAQglLyYfEnkFAns9QgkAMbonFjIjjDXk+I5IQIpdkQuLPAB1vSQQSlZCUHEjiCehCxCshKXpI6vERxwJ54pCUJOMdFqFDsBDq5Z6EpCQ8RPhWIrEQESQtUb8RKWGQC0lDhJIIBYHsJeRjKYcdRPl2fZ4Dgoglyk9QQAazEFOI9kMtiMEshIJoJI4fM9IOc4hbzEJISEsSzkFDGpJwjqNA2IUwkGYkrOMgEH4hHKQRCe9gIaK7YK+AhaggpSWIg4c0sBLEoYOUlUALASDVJZADgVT+48IWooUUlGAOCFJVAi6keQjqwCAVJaijdQi8EBBSTQI7GofgC0EhlSS4A4bUuSrijl8IAT+Nsw13/EYI8JG1ebhDAgkkxlPHKgIxnjke6hBB0t8Ycgx0yCBDecePhHmYDDKUd8zxDDHkm2IxnXFiSKt1SGt1SHN1SHOdxTGcxbGW1J4ku5Mwer1erxftHwo2E70CZdZ8AAAAAElFTkSuQmCC'}}/> 
+                  <Text style={{color: 'white'}}> Aguarde...</Text>
+                
+              </View> : <></>
+            }
             <TouchableOpacity style={styles.captureButton} onPress={handleCaptureImage}>
               <Text style={styles.captureButtonText}>
                 <MaterialCommunityIcons name="circle-slice-8" size={60} color="white" />
