@@ -4,5 +4,5 @@ export interface MarkerEntity {
     imagePath: string;
     title: string;
     description: string;
-    photodate: string;
+    photoDate: string;
   }

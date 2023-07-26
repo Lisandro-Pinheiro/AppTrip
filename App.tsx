@@ -43,7 +43,21 @@ const App = () => {
 
   async function getPlace(){
     return onValue (ref(db,'/places'), (snapshot) =>{
-      console.log('dados do RealTime',snapshot);
+     try{
+      setMarkers([]);
+      if (snapshot !== undefined) {
+        snapshot.forEach((childSnapshot)=>{
+
+          const childkey = childSnapshot.key;
+          let childValue = childSnapshot.val();
+          childValue.id = childkey;
+          setMarkers((places)=>[...places, (childValue as MarkerEntity)])
+
+        })
+      }
+     } catch (e) {
+      console.log(e);
+     }
     });
   }
 
@@ -78,7 +92,7 @@ const App = () => {
         imagePath: capturedImage,
         title: '',
         description: '',
-        photodate: new Date().toString(),
+        photoDate: new Date().toString(),
       };
       setMarkers([...markers, newMarker]);
     }
