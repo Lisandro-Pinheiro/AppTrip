@@ -16,7 +16,7 @@ import { Camera, CameraType } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Keyboard } from 'react-native';
 import { app, db } from './firebase-config';
-import { onValue, ref } from 'firebase/database';
+import { onValue, push, ref, update } from 'firebase/database';
 import * as  firebaseStorage from '@firebase/storage';
 
 export interface MarkerEntity {
@@ -38,6 +38,7 @@ const App = () => {
   const [markerTitle, setMarkerTitle] = useState('');
   const [markerDescription, setMarkerDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -157,7 +158,8 @@ const App = () => {
         title: '',
         description: '',
         photodate: new Date().toString(),
-      };
+      }; 
+      push(ref(db,'places'),newMarker)
       setMarkers([...markers, newMarker]);
 
       setCapturedImage(photo.uri);
@@ -203,6 +205,15 @@ const App = () => {
     setCameraVisible(false);
   };
 
+  async function updateItem() {
+    const openedItemId = places.findIndex(item => item.id === location.currentPlace.id);
+
+    const localPlaces = places;
+    localPlaces[openedItemId].description = placeDescription;
+
+    update(ref(db, '/places/' + localPlaces[openedItemId].id), localPlaces[openedItemId]);
+    setMarkerDescription('');
+  }
   return (
     <View style={styles.container}>
       {isCameraVisible ? (
@@ -226,7 +237,7 @@ const App = () => {
                 alignItems: "center"
               }}>
                 <Image style={{width: 100, height: 80}}
-                  source={{uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADKCAMAAADXTv+nAAAAJ1BMVEX///8oKChWVlaQkJAzMzOmpqbLy8tpaWm3t7dFRUV/f3/c3Nzq6urM8SFYAAAEwklEQVR4nO3a4XbaMAyG4dAA2Sj3f71baEOT2JY+yZLtpH5/tuCj56gsGTAMvV6v11v3+Kr2GLk93tWeJK/HutrDZPQ4J+S4ksdZIYeVdEhrdUjBxv+xD5JDpmmymA5uXKIfJoRMS3aDMo0jJpFBpqm0ZBxBiQgyTaUl44hKJJBpKi0ZzwohJALItM9+8H3nhaQlOCRwHBQSOqpAkpLDQVISFBJxnAbiNf06XAJC6ixkELxK9BC/4dfBK8Eg1RaCSyBIRYc7xHf6daAEgdRcyIC+3pUQ7+HXYSsBIJUXAq5EB/Effh20Eh5SfSGYhIU04DgPBJFwkCYcyOudgTTiAFZyEAgvoSHNOM4DYSUkpCEH+3qXQjxGvM2xj2JWQkE0C/l4JWYgFlMIxBBZbjdUQq+EgIgX8rFJ7uAopCQNyXRgkltQEYiEoYVQFEqShMgWEjIgSMxBUYwgIkYOJCkhVpKCCBYSZ0CSFCRJwVey/NjAkQVJUPCVpB1xSJqRC4Ely69QiIODkcQo6L/Ay88wCMWwgMQoBCT2NVPEQTPASzsnCSgUJPK9X97BMdCbrXwJeTwHYRn4DTAr2VMkDu5bDoYORLKl5EAcGQqKxLGVCB1CBkZJSICzEw7zdeRQwLMjDi+GnJKVJ2MoKHF2DIqLSpuMOX9JEcact6SUQ3FHLKoYY85TUpAxKP7niFeSMVcBYjJ3pMIQk5kTFYSYzEtUCGIyK525Q/vebn7uEIMZwWwdO4nBeYJMHWuJyXGiDBlz1Ry9Xq9XvT+SnGb4Kylf4WQRKRIUhcNcIneEFJXDGKJy7CU6iK3EAqJ0mEKUjq1EC7GUdEiHdEiH4JDTXEeauLIrJbtDWoCoJMEh9RkqSeyU6gw5xWmIXq/Xa7n7K7Pjrq/MjoO7vzM57vrO5Di4+zqD867rDM4Du+/KPvC6y2BGpL3DHlJEEjDyJYGjACXGcIH4UuIMJ4gjJeXwgjhJkgw/iAeFYHhCzCmeDhpiKiEZHtcRHwrDMLhFYSA2FI5hctPISrIpLMPqPt5Z4uq4yCQZFCHj8xWq+KoEhWdsHJ9LAoZYoqAIGT8OhHJZ50sRMjYOFnJJQqz/vqSMrYOVXPIkOEXK2DsYyGXf7vdmErEjgGwkzzkJxOqiImaEjhXkuURAQglLyYfEnkFAns9QgkAMbonFjIjjDXk+I5IQIpdkQuLPAB1vSQQSlZCUHEjiCehCxCshKXpI6vERxwJ54pCUJOMdFqFDsBDq5Z6EpCQ8RPhWIrEQESQtUb8RKWGQC0lDhJIIBYHsJeRjKYcdRPl2fZ4Dgoglyk9QQAazEFOI9kMtiMEshIJoJI4fM9IOc4hbzEJISEsSzkFDGpJwjqNA2IUwkGYkrOMgEH4hHKQRCe9gIaK7YK+AhaggpSWIg4c0sBLEoYOUlUALASDVJZADgVT+48IWooUUlGAOCFJVAi6keQjqwCAVJaijdQi8EBBSTQI7GofgC0EhlSS4A4bUuSrijl8IAT+Nsw13/EYI8JG1ebhDAgkkxlPHKgIxnjke6hBB0t8Ycgx0yCBDecePhHmYDDKUd8zxDDHkm2IxnXFiSKt1SGt1SHN1SHOdxTGcxbGW1J4ku5Mwer1erxftHwo2E70CZdZ8AAAAAElFTkSuQmCC'}}/> 
+                  source={{uri: 'https://cdn.dribbble.com/users/4011649/screenshots/10677615/media/948d65ef147246f25e31d44b9a59e660.gif'}}/> 
                   <Text style={{color: 'white'}}> Aguarde...</Text>
                 
               </View> : <></>
