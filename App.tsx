@@ -70,11 +70,11 @@ const App = () => {
       };
       setMarkers([...markers, newMarker]);
     }
-    setCameraVisible(false); 
+    setCameraVisible(false);
 
   };
 
- const handleCaptureImage = async () => {
+  const handleCaptureImage = async () => {
     if (cameraRef.current) {
       const photo = await cameraRef.current.takePictureAsync();
       await saveToGallery(photo.uri);
@@ -119,7 +119,7 @@ const App = () => {
     setCurrentLocation({ latitude, longitude });
   };
 
-  
+
   const saveToGallery = async (photoUri) => {
     try {
       await MediaLibrary.saveToLibraryAsync(photoUri);
@@ -208,10 +208,10 @@ const App = () => {
     setModalVisible(false);
   }
 
-  async function removeItem (){
+  async function removeItem() {
     setModalVisible(false);
     remove(ref(db, '/places/' + currentPlace.id));
-    setCurrentPlace(null); 
+    setCurrentPlace(null);
     console.log(currentPlace);
   }
 
@@ -220,15 +220,15 @@ const App = () => {
     return Alert.alert(
       "Deseja remover local?",
       "Esta ação não poderá ser desfeita",
-        [
-          {
-            text: "Sim",
-            onPress: () => removeItem()
-          }, 
-          {
-            text: "Não",
-          }
-        ]
+      [
+        {
+          text: "Sim",
+          onPress: () => removeItem()
+        },
+        {
+          text: "Não",
+        }
+      ]
     )
   }
   return (
@@ -317,6 +317,12 @@ const App = () => {
               {markerImageUri && (
                 <Image source={{ uri: currentPlace.imagePath }} style={styles.modalImage} />
               )}
+
+              {currentPlace.description ? (
+                
+              ): (
+
+              )}
               <TextInput
                 style={styles.input}
                 placeholder="Título"
@@ -329,7 +335,10 @@ const App = () => {
                 value={markerDescription}
                 onChangeText={setMarkerDescription}
                 multiline={true}
+              
               />
+            
+
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 60 }}>
                 <Button title="Salvar" onPress={updateItem} color='#000' />
                 <Button title="Fechar" onPress={handleCloseModal} color='#000' />
