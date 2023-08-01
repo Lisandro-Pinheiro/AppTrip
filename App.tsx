@@ -8,6 +8,7 @@ import {
   TextInput,
   Button,
   Image,
+  Alert,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialIcons, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,20 +17,13 @@ import { Camera, CameraType } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import { Keyboard } from 'react-native';
 import { app, db } from './firebase-config';
-import { onValue, push, ref, update } from 'firebase/database';
+import { onValue, push, ref, remove, update } from 'firebase/database';
 import * as  firebaseStorage from '@firebase/storage';
-
-export interface MarkerEntity {
-  id: string;
-  coords: { latitude: number; longitude: number };
-  imagePath: string;
-  title: string;
-  description: string;
-  photodate: string;
-}
+import { MarkerEntity } from './src/marker-entity';
 
 const App = () => {
   const [markers, setMarkers] = useState<MarkerEntity[]>([]);
+  const [currentPlace, setCurrentPlace] = useState<MarkerEntity>();
   const [currentLocation, setCurrentLocation] = useState(null);
   const [isCameraVisible, setCameraVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -42,27 +36,65 @@ const App = () => {
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
-  }; 
+  };
 
-  async function getPlace(){
-    return onValue (ref(db,'/places'), (snapshot) =>{
-     try{
-      setMarkers([]);
-      if (snapshot !== undefined) {
-        snapshot.forEach((childSnapshot)=>{
+  async function getPlace() {
+    return onValue(ref(db, '/places'), (snapshot) => {
+      try {
+        setMarkers([]);
+        if (snapshot !== undefined) {
+          snapshot.forEach((childSnapshot) => {
 
-          const childkey = childSnapshot.key;
-          let childValue = childSnapshot.val();
-          childValue.id = childkey;
-          setMarkers((places)=>[...places, (childValue as MarkerEntity)])
+            const childkey = childSnapshot.key;
+            let childValue = childSnapshot.val();
+            childValue.id = childkey;
+            setMarkers((places) => [...places, (childValue as MarkerEntity)])
 
-        })
+          })
+        }
+      } catch (e) {
+        console.log(e);
       }
-     } catch (e) {
-      console.log(e);
-     }
     });
   }
+
+  const handleAddMarker = () => {
+    if (currentLocation && capturedImage) {
+      const newMarker: MarkerEntity = {
+        id: markers.length.toString(),
+        coords: { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+        imagePath: capturedImage,
+        title: '',
+        description: '',
+        photoDate: new Date().toString(),
+      };
+      setMarkers([...markers, newMarker]);
+    }
+    setCameraVisible(false); 
+
+  };
+
+ const handleCaptureImage = async () => {
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync();
+      await saveToGallery(photo.uri);
+
+      const newMarker: MarkerEntity = {
+        id: markers.length.toString(),
+        coords: { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
+        imagePath: await uploadImage(photo.uri),
+        title: '',
+        description: '',
+        photoDate: new Date().toString(),
+      };
+      push(ref(db, 'places'), newMarker)
+      setMarkers([...markers, newMarker]);
+
+      setCapturedImage(photo.uri);
+      setCameraVisible(false);
+      handleAddMarker();
+    }
+  };
 
   const cameraRef = useRef(null);
   const [cameraType, setCameraType] = useState(CameraType.back);
@@ -87,21 +119,7 @@ const App = () => {
     setCurrentLocation({ latitude, longitude });
   };
 
-  const handleAddMarker = () => {
-    if (currentLocation && capturedImage) {
-      const newMarker: MarkerEntity = {
-        id: markers.length.toString(),
-        coords: { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
-        imagePath: capturedImage,
-        title: '',
-        description: '',
-        photoDate: new Date().toString(),
-      };
-      setMarkers([...markers, newMarker]);
-    }
-    setCameraVisible(false);
-  };
-
+  
   const saveToGallery = async (photoUri) => {
     try {
       await MediaLibrary.saveToLibraryAsync(photoUri);
@@ -128,45 +146,24 @@ const App = () => {
     );
   };
 
-  async function uploadImage(imageUrl): Promise<string>{
+  async function uploadImage(imageUrl): Promise<string> {
     setIsUploading(true);
-    const response = await fetch (imageUrl)
+    const response = await fetch(imageUrl)
     const blob = await response.blob();
 
     const storage = firebaseStorage.getStorage(app);
     const storageRef = firebaseStorage.ref(
       storage,
       'images/' + imageUrl.replace(/^.*[\\\/]/, '')
-    ); 
+    );
 
     const upload = await firebaseStorage.uploadBytes(storageRef, blob);
-    const uploadedImageUrl = await firebaseStorage.getDownloadURL (storageRef);
+    const uploadedImageUrl = await firebaseStorage.getDownloadURL(storageRef);
     console.log(uploadedImageUrl);
     setIsUploading(false);
     return uploadedImageUrl;
-    }
+  }
 
-  const handleCaptureImage = async () => {
-    if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync();
-      await saveToGallery(photo.uri);
-
-      const newMarker: MarkerEntity = {
-        id: markers.length.toString(),
-        coords: { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
-        imagePath: await uploadImage(photo.uri),
-        title: '',
-        description: '',
-        photodate: new Date().toString(),
-      }; 
-      push(ref(db,'places'),newMarker)
-      setMarkers([...markers, newMarker]);
-
-      setCapturedImage(photo.uri);
-      setCameraVisible(false);
-      handleAddMarker();
-    }
-  };
 
   const renderMarkerCallout = (marker: MarkerEntity) => (
     <TouchableOpacity onPress={dismissKeyboard}>
@@ -176,9 +173,8 @@ const App = () => {
   );
 
   const handleMarkerPress = (marker: MarkerEntity) => {
-    setMarkerImageUri(marker.imagePath);
-    setMarkerTitle(marker.title);
-    setMarkerDescription(marker.description);
+    console.log(marker);
+    setCurrentPlace(marker);
     setModalVisible(true);
   };
 
@@ -206,13 +202,34 @@ const App = () => {
   };
 
   async function updateItem() {
-    const openedItemId = places.findIndex(item => item.id === location.currentPlace.id);
+    currentPlace.description = markerDescription;
+    update(ref(db, '/places/' + currentPlace.id), currentPlace);
+    setCurrentPlace(null);
+    setModalVisible(false);
+  }
 
-    const localPlaces = places;
-    localPlaces[openedItemId].description = placeDescription;
+  async function removeItem (){
+    setModalVisible(false);
+    remove(ref(db, '/places/' + currentPlace.id));
+    setCurrentPlace(null); 
+    console.log(currentPlace);
+  }
 
-    update(ref(db, '/places/' + localPlaces[openedItemId].id), localPlaces[openedItemId]);
-    setMarkerDescription('');
+
+  function showconfirmDialog() {
+    return Alert.alert(
+      "Deseja remover local?",
+      "Esta ação não poderá ser desfeita",
+        [
+          {
+            text: "Sim",
+            onPress: () => removeItem()
+          }, 
+          {
+            text: "Não",
+          }
+        ]
+    )
   }
   return (
     <View style={styles.container}>
@@ -227,20 +244,20 @@ const App = () => {
           >
 
             {
-              isUploading? 
-              <View style={{
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'black',
-                opacity: 0.8, 
-                justifyContent: "center",
-                alignItems: "center"
-              }}>
-                <Image style={{width: 100, height: 80}}
-                  source={{uri: 'https://cdn.dribbble.com/users/4011649/screenshots/10677615/media/948d65ef147246f25e31d44b9a59e660.gif'}}/> 
-                  <Text style={{color: 'white'}}> Aguarde...</Text>
-                
-              </View> : <></>
+              isUploading ?
+                <View style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'black',
+                  opacity: 0.8,
+                  justifyContent: "center",
+                  alignItems: "center"
+                }}>
+                  <Image style={{ width: 100, height: 80 }}
+                    source={{ uri: 'https://cdn.dribbble.com/users/4011649/screenshots/10677615/media/948d65ef147246f25e31d44b9a59e660.gif' }} />
+                  <Text style={{ color: 'white' }}> Aguarde...</Text>
+
+                </View> : <></>
             }
             <TouchableOpacity style={styles.captureButton} onPress={handleCaptureImage}>
               <Text style={styles.captureButtonText}>
@@ -249,7 +266,7 @@ const App = () => {
             </TouchableOpacity>
             <TouchableOpacity style={styles.switchCameraButton} onPress={handleSwitchCamera}>
               <Text style={styles.switchCameraButtonText}>
-              <MaterialIcons name="flip-camera-android" size={60} color="white" />
+                <MaterialIcons name="flip-camera-android" size={60} color="white" />
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.goBackButton} onPress={handleGoBackToMap}>
@@ -273,7 +290,7 @@ const App = () => {
             >
               {markers.map((marker) => (
                 <Marker
-                  key={marker.id}
+                  key={Math.random()}
                   coordinate={marker.coords}
                   onPress={() => handleMarkerPress(marker)}
                 >
@@ -298,7 +315,7 @@ const App = () => {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               {markerImageUri && (
-                <Image source={{ uri: markerImageUri }} style={styles.modalImage} />
+                <Image source={{ uri: currentPlace.imagePath }} style={styles.modalImage} />
               )}
               <TextInput
                 style={styles.input}
@@ -314,8 +331,9 @@ const App = () => {
                 multiline={true}
               />
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 60 }}>
-                <Button title="Salvar" onPress={handleSaveMarker} color='#000' />
+                <Button title="Salvar" onPress={updateItem} color='#000' />
                 <Button title="Fechar" onPress={handleCloseModal} color='#000' />
+                <Button title="Excluir" onPress={showconfirmDialog} color='#000' />
               </View>
             </View>
           </View>
