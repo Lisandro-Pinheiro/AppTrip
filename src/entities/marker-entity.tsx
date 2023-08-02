@@ -1,8 +1,9 @@
 export interface MarkerEntity {
     id: string;
-    coords: {latitude: number, longitude: number};
     imagePath: string;
-    title: string;
+    coords: {latitude: number, longitude: number};
     description: string;
     photoDate: string;
+    title: string;
   }
+  
