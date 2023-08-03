@@ -17,7 +17,7 @@ import {
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as MediaLibrary from 'expo-media-library';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Feather, AntDesign} from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 import { MarkerEntity } from '../entities/marker-entity';
 import { format } from 'date-fns';
@@ -247,7 +247,7 @@ const MapPage = ({ navigation, route }: any) => {
         )}
 
         <TouchableOpacity style={styles.cameraButton} onPress={() => navigation.navigate('CamPage')}>
-          <MaterialIcons name="camera" size={30} color="#FFFFFF" />
+          <MaterialCommunityIcons name="camera-marker-outline" size={30} color="#FFF" />
         </TouchableOpacity>
 
         {
@@ -306,27 +306,27 @@ const MapPage = ({ navigation, route }: any) => {
                       {!isEditing && (
                         <Animatable.View animation="fadeIn" duration={500} delay={200}>
                           <TouchableOpacity
-                            style={[styles.editButton, { backgroundColor: '#1976D2' }]}
+                            style={[styles.editButton, { backgroundColor: '#000' }]}
                             onPress={handleEdit}
                           >
-                            <Text style={styles.buttonText}>Editar</Text>
+                            <Feather name="edit" size={24} color="white" />
                           </TouchableOpacity>
                         </Animatable.View>
                       )}
                       <Animatable.View animation="fadeIn" duration={500} delay={200}>
                         <TouchableOpacity
-                          style={[styles.saveButton, { backgroundColor: '#303F9F' }]}
+                          style={[styles.saveButton, { backgroundColor: '#000' }]}
                           onPress={updateItem}
                         >
-                          <Text style={styles.buttonText}>Salvar</Text>
+                          <MaterialIcons name="save-alt" size={24} color="white" />
                         </TouchableOpacity>
                       </Animatable.View>
                       <Animatable.View animation="fadeIn" duration={500} delay={300}>
                         <TouchableOpacity
-                          style={[styles.deleteButton, { backgroundColor: '#FF0000' }]}
+                          style={[styles.deleteButton, { backgroundColor: '#000' }]}
                           onPress={showModalConfirmDialog}
                         >
-                          <Text style={styles.buttonText}>Deletar</Text>
+                          <AntDesign name="closesquareo" size={24} color="white" />
                         </TouchableOpacity>
                       </Animatable.View>
                     </View>
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
     right: 30,
-    backgroundColor: '#303F9F',
+    backgroundColor: '#000',
     borderRadius: 40,
     padding: 15,
     elevation: 5,

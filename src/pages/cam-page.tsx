@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Image } from 'react-native';
 import { Camera } from 'expo-camera';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
 
 const CamPage = ({ navigation }: any) => {
@@ -32,10 +32,10 @@ const CamPage = ({ navigation }: any) => {
     <View style={styles.container}>
       <Camera ref={cameraRef} style={styles.camera} type={cameraType} />
       <TouchableOpacity style={styles.captureButton} onPress={handleCaptureImage}>
-        <MaterialIcons name="camera" size={30} color="#FFFFFF" />
+      <Ionicons name="radio-button-on-sharp" size={50} color="white" />
       </TouchableOpacity>
       <TouchableOpacity style={styles.toggleButton} onPress={toggleCameraType}>
-        <MaterialIcons name="flip-camera-android" size={30} color="#FFFFFF" />
+        <MaterialIcons name="flip-camera-android" size={40} color="#FFF" />
       </TouchableOpacity>
     </View>
   );
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     alignSelf: 'center',
-    backgroundColor: '#303F9F',
+    backgroundColor: '#transoarent',
     borderRadius: 40,
     padding: 15,
     elevation: 5,
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     alignSelf: 'flex-end',
-    backgroundColor: '#303F9F',
+    backgroundColor: '#transparent',
     borderRadius: 40,
     padding: 15,
     elevation: 5,
