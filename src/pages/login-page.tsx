@@ -1,13 +1,24 @@
 // LoginScreen.js
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { getStorageData } from '../shared/secure-store-service';
 
 const LoginPage = ({ navigation }) => {
-  const [nome, setNome] = useState('');
+  const [author, setAuthor] = useState('');
 
-  const handleLogin = () => {
-    
-    navigation.navigate('MapPage', { nome });
+  useEffect(()={
+
+  }, []);
+
+async function  getAuthor(){
+  const localAuthor = await getStorageData('atuhor')
+  if (localAuthor){
+    navigation.navigate('MapPage')
+  }
+}
+  function Login () {
+    setStoreData ('author,', author)
+    navigation.navigate('MapPage', { author });
   };
 
   return (
@@ -17,10 +28,10 @@ const LoginPage = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Digite seu nome"
-        value={nome}
-        onChangeText={(texto) => setNome(texto)}
+        value={author}
+        onChangeText={setAuthor}
       />
-      <TouchableOpacity style={styles.botaoLogin} onPress={handleLogin}>
+      <TouchableOpacity style={styles.botaoLogin} onPress={Login}>
         <Text style={styles.textoBotao}>Login</Text>
       </TouchableOpacity>
     </View>
@@ -33,7 +44,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: "#dadd66"
+    backgroundColor: "#dadd66",
+    marginHorizontal: 16,
   },
   input: {
     width: '100%',
