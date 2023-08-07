@@ -7,6 +7,7 @@ import CamPage from './src/pages/cam-page';
 import MapPage from './src/pages/map-page';
 import MarkerPage from './src/pages/marker-image-page.tsx';
 import LoginPage from './src/pages/login-page';
+import ChatPage from './src/pages/chat-page';
 
 const Stack = createStackNavigator();
 
@@ -18,6 +19,9 @@ const AppNavigator = () => {
         <Stack.Screen name="CamPage" component={CamPage} />
         <Stack.Screen name="MapPage" component={MapPage} initialParams={{ capturedImage: null }} />
         <Stack.Screen name="Marker" component={MarkerPage} />
+        <Stack.Screen options= {({route}) => ({
+          headerShown: true
+        })}  name="chat" component={ChatPage} />
       </Stack.Navigator>
     </NavigationContainer>
   );

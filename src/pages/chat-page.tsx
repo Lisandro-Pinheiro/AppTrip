@@ -1,9 +1,11 @@
 import { onValue, push, ref } from "firebase/database";
 import React, { useEffect, useState } from "react";
-import { FlatList, View, Image, Text, TextInput, TouchableOpacity } from "react-native";
+import { FlatList, View, Image, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { db } from "../../firebase-config2";
 import { ChatEntity } from "../entities/chat-entity";
-import { getStorageData } from "../shared/secure-store-service";
+import { getStoredData } from "../shared/secure-store-service";
+import { MaterialIcons} from '@expo/vector-icons';
+
 
 export default function ChatPage({ navigation, route }) {
     const[author, setAuthor] = useState('');
@@ -17,7 +19,7 @@ export default function ChatPage({ navigation, route }) {
     }, [])
 
     async function getAuthor(){
-        const author = await getStorageData('user');
+        const author = await getStoredData('user');
         setAuthor(author);
     }
 
@@ -66,37 +68,35 @@ export default function ChatPage({ navigation, route }) {
                 renderItem={({ item }) => {
                     return (
                         item.sender !== author ?
-                            <View>
-                                <View style={styles.container}>
-                                    <View style={styles.containerMessage}>
-                                        <View style={{ backgroundColor: 'transparent', width: 200, flexDirection: 'row', marginBottom: 16 }}>
-                                            <Image source={{ uri: `https://robohash.org/${item.sender}.png?set=set2` }}
+                        
+                                    <View style={styles.container}>
+                                        <View style={styles.containerMessage}>
+                                            <View style={{ backgroundColor: 'transparent', width: 200, flexDirection: 'row', marginBottom: 16 }}>
+                                             <Image source={{ uri: `https://robohash.org/${item.sender}.png?set=set2` }}
                                                 style={{ backgroundColor: '#ccc', width: 40, height: 40, marginRight: 8, borderRadius: 20 }} />
-                                            <View style={{ backgroundColor: '#ccc', width: 'auto', borderRadius: 7, paddingVertical: 2, paddingHorizontal: 4 }}>
-                                                <Text style={{ fontSize: 13, fontWeight: '700', }}> {item.sender}</Text>
-                                                <Text style={{}}>{item.message}</Text>
-                                                <Text style={{ textAlign: "left", fontSize: 8 }}>{convertTimeStampToDate(item.date)}</Text>
+                                                <View style={{ backgroundColor: '#ccc', width: 'auto', borderRadius: 7, paddingVertical: 2, paddingHorizontal: 4 }}>
+                                                    <Text style={{ fontSize: 13, fontWeight: '700', }}> {item.sender}</Text>
+                                                    <Text style={{}}>{item.message}</Text>
+                                                    <Text style={{ textAlign: "left", fontSize: 8 }}>{convertTimestampToDate(item.date)}</Text>
+                                                </View>
                                             </View>
                                         </View>
                                     </View>
-                                </View>
-                                :
-                                <View>
-                                    <View>
-                                        <View style={{ backgroundColor: 'transparent', width: 200, flexDirection: 'row', marginBottom: 16 }}>
-                                            <Image source={{ uri: `https://robohash.org/${item.sender}.png?set=set2` }}
+                                    :
+                                    <View style={styles.containerReverse}>
+                                        <View style={styles.containerMessageReverse}>
+                                            <View style={{ backgroundColor: 'transparent', width: 200, flexDirection: 'row', marginBottom: 16 }}>
+                                             <Image source={{ uri: `https://robohash.org/${item.sender}.png?set=set2` }}
                                                 style={{ backgroundColor: '#ccc', width: 40, height: 40, marginRight: 8, borderRadius: 20 }} />
-                                            <View style={{ backgroundColor: '#ccc', width: 'auto', borderRadius: 7, paddingVertical: 2, paddingHorizontal: 4 }}>
-                                                <Text style={{ fontSize: 13, fontWeight: '700', }}> {item.sender}</Text>
-                                                <Text style={{}}>{item.message}</Text>
-                                                <Text style={{ textAlign: "left", fontSize: 8 }}>{convertTimeStampToDate(item.date)}</Text>
+                                                <View style={{ backgroundColor: '#ccc', width: 'auto', borderRadius: 7, paddingVertical: 2, paddingHorizontal: 4 }}>
+                                                    <Text style={{ fontSize: 13, fontWeight: '700', }}> {item.sender}</Text>
+                                                    <Text style={{}}>{item.message}</Text>
+                                                    <Text style={{ textAlign: "left", fontSize: 8 }}>{convertTimestampToDate(item.date)}</Text>
+                                                </View>
                                             </View>
                                         </View>
                                     </View>
-                                </View>
-                            </View>
-                      
-        
+                            
                     )
                 }} 
                 keyExtractor={(item) => item.id}
@@ -113,10 +113,42 @@ export default function ChatPage({ navigation, route }) {
                         marginRight: 8
                     }}
                     />
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={sendMessage}>
                         <MaterialIcons name="send" type="google" size={20} color="000"/>
                     </TouchableOpacity>
                 </View>
         </View>
     )
 }
+
+const styles= StyleSheet.create ({
+    container:{
+        backgroundColor: 'transparent',
+        alignItems: 'center',
+        justifyContent: "flex-end",
+        paddingLeft: 16,      
+    },
+
+    containerMessage:{
+        backgroundColor: 'tranparent',
+        width: '100%',
+        alignItems: 'flex-start',
+        marginVertical: 4
+    },
+
+    containerReverse:{
+        backgroundColor: "transparente",
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingRight: 16,
+        width: '100%'
+    }, 
+
+    containerMessageReverse: {
+        backgroundColor: 'tranparent',
+        width: '100%',
+        alignItems: 'flex-end',
+        marginVertical: 4
+    }
+
+})

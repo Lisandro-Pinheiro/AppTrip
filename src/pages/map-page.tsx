@@ -17,7 +17,7 @@ import {
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as MediaLibrary from 'expo-media-library';
-import { MaterialIcons, MaterialCommunityIcons, Feather, AntDesign} from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons, Feather, AntDesign, Entypo} from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 import { MarkerEntity } from '../entities/marker-entity';
 import { format } from 'date-fns';
@@ -25,6 +25,8 @@ import { onValue, push, ref, remove, update } from 'firebase/database';
 import { app, db } from '../../firebase-config2'
 import * as firebaseStorage from '@firebase/storage'
 import { Camera } from 'expo-camera';
+import { getStoredData } from '../shared/secure-store-service';
+
 
 
 const MapPage = ({ navigation, route }: any) => {
@@ -124,7 +126,8 @@ const MapPage = ({ navigation, route }: any) => {
         imagePath: await uploadImage(capturedImage),
         description: '',
         photoDate: formattedDate,
-        title: ''
+        title: '',
+        author: await getStoredData ('author')
       };
       push(ref(db, 'places'), newMarker);
     }
@@ -324,11 +327,23 @@ const MapPage = ({ navigation, route }: any) => {
                       <Animatable.View animation="fadeIn" duration={500} delay={300}>
                         <TouchableOpacity
                           style={[styles.deleteButton, { backgroundColor: '#000' }]}
-                          onPress={showModalConfirmDialog}
+                          onPress={()=>{
+                            navigation.navigate('chat', {place: currentLocation})
+                          }}
                         >
-                          <AntDesign name="closesquareo" size={24} color="white" />
+                          <Entypo name="chat" size={24} color="white" />
                         </TouchableOpacity>
                       </Animatable.View>
+                      <Animatable.View animation="fadeIn" duration={500} delay={300}>
+                        <TouchableOpacity
+                          style={[styles.deleteButton, { backgroundColor: '#000' }]}
+                          onPress={showModalConfirmDialog}
+                        >
+                          <MaterialIcons name="delete" size={24} color="white" />
+                        </TouchableOpacity>
+                      </Animatable.View>
+                      <View>
+                        </View>
                     </View>
                   </Animatable.View>
                 </KeyboardAvoidingView>

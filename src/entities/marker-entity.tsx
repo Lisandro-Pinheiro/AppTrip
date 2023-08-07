@@ -5,5 +5,6 @@ export interface MarkerEntity {
     description: string;
     photoDate: string;
     title: string;
+    author: string;
   }
   

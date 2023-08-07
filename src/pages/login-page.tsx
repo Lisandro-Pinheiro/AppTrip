@@ -1,30 +1,31 @@
 // LoginScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { getStorageData } from '../shared/secure-store-service';
+import { getStoredData, setStoredData } from '../shared/secure-store-service';
+
 
 const LoginPage = ({ navigation }) => {
   const [author, setAuthor] = useState('');
 
-  useEffect(()={
-
+  useEffect(()=>{
+    getAuthor();
   }, []);
 
 async function  getAuthor(){
-  const localAuthor = await getStorageData('atuhor')
+  const localAuthor = await getStoredData('author')
   if (localAuthor){
     navigation.navigate('MapPage')
   }
 }
   function Login () {
-    setStoreData ('author,', author)
+    setStoredData ('author,', author)
     navigation.navigate('MapPage', { author });
   };
 
   return (
     <View style={styles.container}>
         <Image style={styles.icon}source={require('../../assets/icon.png')}/>
-        <Text style={styles.title}> MarkTrip</Text>
+        <Text style={styles.title}> MarkTrip </Text>
       <TextInput
         style={styles.input}
         placeholder="Digite seu nome"
@@ -45,12 +46,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: "#dadd66",
-    marginHorizontal: 16,
   },
   input: {
     width: '100%',
     height: 40,
-    borderColor: '#000',
+    borderColor: 'black',
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: 'black',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
