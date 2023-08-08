@@ -19,7 +19,7 @@ export default function ChatPage({ navigation, route }) {
     }, [])
 
     async function getAuthor(){
-        const author = await getStoredData('user');
+        const author = await getStoredData('author');
         setAuthor(author);
     }
 
@@ -53,6 +53,7 @@ export default function ChatPage({ navigation, route }) {
 
         push(ref(db, `/messages/${route.params.place.id}`), newMessage);
         setMessage('');
+    
     }
 
     function convertTimestampToDate(timestamp:number) {
@@ -114,7 +115,7 @@ export default function ChatPage({ navigation, route }) {
                     }}
                     />
                     <TouchableOpacity onPress={sendMessage}>
-                        <MaterialIcons name="send" type="google" size={20} color="000"/>
+                        <MaterialIcons name="send" type="google" size={20} color="gray"/>
                     </TouchableOpacity>
                 </View>
         </View>

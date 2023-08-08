@@ -18,8 +18,8 @@ async function  getAuthor(){
   }
 }
   function Login () {
-    setStoredData ('author,', author)
-    navigation.navigate('MapPage', { author });
+    setStoredData ('author',author)
+    navigation.navigate('MapPage',{author});
   };
 
   return (

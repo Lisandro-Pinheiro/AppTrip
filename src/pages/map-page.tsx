@@ -33,6 +33,7 @@ const MapPage = ({ navigation, route }: any) => {
   const { capturedImage } = route.params;
   const [markers, setMarkers] = useState<MarkerEntity[]>([]);
   const [currentLocation, setCurrentLocation] = useState<any>(null);
+  const  [currentPlace, setCurrentPlace] =  useState<MarkerEntity[]>([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isEditing, setEditing] = useState(false);
   const [photoDate, setPhotoDate] = useState<string>('');
@@ -127,7 +128,7 @@ const MapPage = ({ navigation, route }: any) => {
         description: '',
         photoDate: formattedDate,
         title: '',
-        author: await getStoredData ('author')
+        author: await getStoredData('author')
       };
       push(ref(db, 'places'), newMarker);
     }
@@ -328,7 +329,7 @@ const MapPage = ({ navigation, route }: any) => {
                         <TouchableOpacity
                           style={[styles.deleteButton, { backgroundColor: '#000' }]}
                           onPress={()=>{
-                            navigation.navigate('chat', {place: currentLocation})
+                            navigation.navigate('chat',{place: markerPress})
                           }}
                         >
                           <Entypo name="chat" size={24} color="white" />
