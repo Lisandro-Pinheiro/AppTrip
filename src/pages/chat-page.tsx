@@ -102,8 +102,8 @@ export default function ChatPage({ navigation, route }) {
                 }} 
                 keyExtractor={(item) => item.id}
                 />
-                <View style={{flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 8, marginBottom: 8}}>
-                    <TextInput placeholder="Digite aqui sua mensagem" numberOfLines={1} onChangeText={setMessage}
+                <View style={{flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 8, marginBottom: 8, justifyContent: 'center', alignItems: 'center'}}>
+                    <TextInput placeholder="Digite aqui sua mensagem" numberOfLines={1} onChangeText={setMessage} value={message}
                     style={{
                         backgroundColor: '#ccc',
                         flex: 4,
@@ -115,7 +115,7 @@ export default function ChatPage({ navigation, route }) {
                     }}
                     />
                     <TouchableOpacity onPress={sendMessage}>
-                        <MaterialIcons name="send" type="google" size={20} color="gray"/>
+                        <MaterialIcons name="send" type="google" size={20} color="#ccc"/>
                     </TouchableOpacity>
                 </View>
         </View>
